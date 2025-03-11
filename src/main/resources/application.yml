@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: happy-block
+    version: '@pom.version@'
+  profiles:
+    active: default
+  datasource:
+    name: happy-db
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/happy-db?currentSchema=happy-db
+    username:
+    password:
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000 # 5 minutes
+      connection-timeout: 30000 # 30 seconds
+      max-lifetime: 600000 # 10 minutes
+      auto-commit: true
+      connection-test-query: SELECT 1

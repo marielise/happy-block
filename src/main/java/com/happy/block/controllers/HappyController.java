@@ -14,6 +14,7 @@ public class HappyController {
 
     private final HappyService happyService;
 
+
     @GetMapping
     public String getHappy(){
         happyService.mint();
