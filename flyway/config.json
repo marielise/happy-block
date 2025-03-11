@@ -1,0 +1,4 @@
+{
+  "database": "happy-db",
+  "locations": "/src/main/resources/db/migration"
+}
