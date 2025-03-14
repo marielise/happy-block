@@ -1,5 +1,7 @@
 package com.happy.block.controllers;
 
+import com.happy.block.domain.AccountBalance;
+import com.happy.block.domain.EstimatedCost;
 import com.happy.block.service.HappyService;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,16 @@ public class HappyController {
     @PostMapping("/deploy/{user}")
     public String deploy(@PathVariable String user){
         return happyService.deployContract(user);
+    }
+
+    @GetMapping("/balance/{user}")
+    public AccountBalance getBalance(@PathVariable String user){
+        return happyService.getBalance(user);
+    }
+
+    @PostMapping("/estimate/{user}")
+    public EstimatedCost estimateFee(@PathVariable String user){
+        return happyService.estimateTransactionFee(user);
     }
 
 }
