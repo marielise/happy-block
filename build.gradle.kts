@@ -36,6 +36,9 @@ dependencies {
 
     // Web3j for Ethereum Blockchain Integration
     implementation("org.web3j:core:4.13.0")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")

@@ -7,13 +7,9 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-@ConfigurationProperties(prefix = "happy.node")
-public class BlockChainConfig {
+@ConfigurationProperties(prefix = "happy.encrypt")
+public class EncryptionServiceConfig {
 
-  @Value("localhost")
-  private String nodeHost;
-
-  @Value("8545")
-  private String nodePort;
-
+  @Value("some_328523598@#$%^&_value")
+  private String encryptionKey;
 }

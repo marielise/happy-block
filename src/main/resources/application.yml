@@ -15,5 +15,10 @@ spring:
     baseline-on-migrate: true
 
 happy:
-  node-host: localhost
-  node-port: 8545
+  node:
+    node-host: localhost
+    node-port: 8545
+  wallet:
+    directory: "./wallet"
+  encrypt:
+    encryption-key: "wr%$^safl;j_safhsdfcv"

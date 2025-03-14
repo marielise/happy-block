@@ -7,13 +7,10 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-@ConfigurationProperties(prefix = "happy.node")
-public class BlockChainConfig {
+@ConfigurationProperties(prefix = "happy.wallet")
+public class WalletServiceConfig {
 
-  @Value("localhost")
-  private String nodeHost;
-
-  @Value("8545")
-  private String nodePort;
+  @Value("/wallet")
+  private String directory;
 
 }

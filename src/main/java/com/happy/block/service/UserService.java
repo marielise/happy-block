@@ -1,15 +1,18 @@
 package com.happy.block.service;
 
+import static com.happy.block.common.Utils.generateEthereumAddress;
+import static com.happy.block.common.Utils.isValidEthereumAddress;
+
 import com.happy.block.domain.NewUserDao;
 import com.happy.block.domain.UserRegistrationDao;
 import com.happy.block.entities.User;
 import com.happy.block.repositories.UserRepository;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
-import org.web3j.crypto.ECKeyPair;
-import org.web3j.crypto.Keys;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @AllArgsConstructor
@@ -18,6 +21,7 @@ public class UserService {
 
   private final UserRepository userRepository;
 
+  @Transactional
   public User createUser(NewUserDao userDao){
     User user = User.builder()
         .username(userDao.getUserName())
@@ -28,6 +32,7 @@ public class UserService {
 
   }
 
+  @Transactional
   public User registerUser(UserRegistrationDao userDao) throws BadRequestException {
     if (!isValidEthereumAddress(userDao.getEthAddress())) {
       log.error("Invalid Ethereum Address: {}", userDao);
@@ -55,18 +60,11 @@ public class UserService {
     }
   }
 
-  private String generateEthereumAddress() {
-    try {
-      ECKeyPair credentials = Keys.createEcKeyPair();
-      return "0x" + Keys.getAddress(credentials);
-    } catch (Exception e) {
-      throw new RuntimeException("Error generating Ethereum address", e);
-    }
+  public User getUser(String userName){
+    log.info("Get user by userName {}", userName);
+    Optional<User> user = userRepository.findByUsername(userName);
+    return user.orElse(null);
   }
 
-  // Ethereum address validation
-  private boolean isValidEthereumAddress(String ethAddress) {
-    return ethAddress != null && ethAddress.matches("^0x[a-fA-F0-9]{40}$");
-  }
 
 }
