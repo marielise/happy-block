@@ -46,7 +46,9 @@ public class HappyService {
       String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
       Credentials credentials = Credentials.create(convertToHex(decryptedKey));
 
-      return blockchainService.deployContract(credentials);
+      EstimatedCost estimatedCost = blockchainService.happyNFTEstimate(credentials);
+
+      return blockchainService.deployContract(credentials, estimatedCost.getEstimatedGas());
 
     } catch (Exception e) {
       log.error("deploy contract error", e);

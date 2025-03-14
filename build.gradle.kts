@@ -33,7 +33,13 @@ repositories {
 dependencies {
 
     implementation("org.slf4j:slf4j-api:2.0.9")
-    implementation("org.slf4j:slf4j-simple:2.0.9")
+    implementation("ch.qos.logback:logback-classic:1.5.15")
+    implementation("ch.qos.logback:logback-core:1.5.15")
+
+    configurations.all {
+        exclude(group = "org.slf4j", module = "slf4j-simple") // Prevents SLF4J conflicts
+        exclude(group = "org.apache.logging.log4j", module = "log4j-to-slf4j") // Prevents Log4j conflicts
+    }
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.flywaydb:flyway-core")
@@ -53,8 +59,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")
 
-
-
+    //=================TEST config =================/
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
@@ -69,10 +74,6 @@ dependencies {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine") // ✅ Prevents JUnit 4 conflicts
     }
 
-    configurations.all {
-        exclude(group = "ch.qos.logback", module = "logback-classic") // ✅ Remove Logback
-        exclude(group = "org.apache.logging.log4j", module = "log4j-core") // ✅ Remove Log4j
-    }
 }
 
 tasks.withType<Test> {

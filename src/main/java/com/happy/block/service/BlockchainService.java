@@ -14,7 +14,6 @@ import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthEstimateGas;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.http.HttpService;
-import org.web3j.tx.gas.DefaultGasProvider;
 
 @Slf4j
 @Service
@@ -35,8 +34,10 @@ public class BlockchainService {
     return web3j.web3ClientVersion().send().getWeb3ClientVersion();
   }
 
-  public String deployContract (Credentials credentials) throws Exception {
-    HappyNFT contract = HappyNFT.deploy(web3j, credentials, new DefaultGasProvider() ).send();
+  public String deployContract (Credentials credentials, BigInteger estimatedGas) throws Exception {
+    BigInteger gasLimit = estimatedGas.add(estimatedGas.multiply(new BigInteger("20")).divide(new BigInteger("100"))); //20%
+    HappyNFT contract = HappyNFT.deploy(web3j, credentials,  BigInteger.ZERO, gasLimit).send();
+
     return contract.getContractAddress();
   }
 
