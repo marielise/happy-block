@@ -1,5 +1,7 @@
 package com.happy.block.service;
 
+import static com.happy.block.common.Utils.convertToHex;
+
 import com.happy.block.entities.HappyWallet;
 import com.happy.block.entities.User;
 import java.security.Principal;
@@ -8,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.web3j.crypto.Credentials;
 
 @Slf4j
 @Service
@@ -34,13 +37,13 @@ public class HappyService {
     User user = userService.getUser(userName);
     Optional<HappyWallet> maybeHappyWallet = walletService.getWalletForUser(user);
 
-    HappyWallet happyWallet = maybeHappyWallet.orElse(walletService.createWalletForUser(user));
+    HappyWallet happyWallet = maybeHappyWallet.orElseGet(() -> walletService.createWalletForUser(user));
 
     try {
+      String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
+      Credentials credentials = Credentials.create(convertToHex(decryptedKey));
 
-      //Credentials credentials = Credentials.create(happyWallet.getPrivateEncryptedKey());
-
-      return blockchainService.deployContract(happyWallet.getCredentials());
+      return blockchainService.deployContract(credentials);
 
     } catch (Exception e) {
       throw new RuntimeException(e);

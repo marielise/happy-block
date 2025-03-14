@@ -7,7 +7,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -16,7 +15,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.web3j.crypto.Credentials;
 
 
 @Builder
@@ -46,9 +44,5 @@ public class HappyWallet {
   @CreationTimestamp
   @Column(nullable = false)
   private ZonedDateTime createdDate;
-
-  @Transient
-  @JsonIgnore
-  public Credentials credentials;
 
 }

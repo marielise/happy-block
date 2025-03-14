@@ -20,6 +20,7 @@ public class WalletService {
 
   private final WalletServiceConfig walletServiceConfig;
   private final HappyWalletRepository happyWalletRepository;
+  private final EncryptionService encryptionService;
 
   public HappyWallet createWalletForUser(User user){
     Random random = new Random();
@@ -31,7 +32,7 @@ public class WalletService {
       if (!directory.exists()) {
         log.info("Create directory for wallet {}", directory.getAbsolutePath());
         boolean result = directory.mkdirs();
-        log.info("Create directory for wallet {}", result);
+
       }
 
       String walletFile = WalletUtils.generateLightNewWalletFile(walletPassword, directory);
@@ -39,7 +40,7 @@ public class WalletService {
       Credentials credentials = WalletUtils.loadCredentials(walletPassword, walletServiceConfig.getDirectory() + "/" + walletFile);
 
       String walletAddress = credentials.getAddress(); // address on bc
-      String privateKey = credentials.getEcKeyPair().getPrivateKey().toString();
+      String privateKey = encryptionService.encrypt(credentials.getEcKeyPair().getPrivateKey().toString());
       String jsonFilePath = walletServiceConfig.getDirectory() + File.separator + walletFile;
 
 
@@ -47,15 +48,11 @@ public class WalletService {
           .user(user)
           .address(walletAddress)
           .privateEncryptedKey(privateKey)
-          .encryptedPassword(walletPassword)
+          .encryptedPassword(encryptionService.encrypt(walletPassword))
           .jsonFilePath(jsonFilePath)
           .build();
 
-      happyWalletRepository.save(wallet);
-
-      wallet.setCredentials(credentials);
-
-      return wallet;
+      return happyWalletRepository.save(wallet);
 
     } catch (Exception e) {
       log.error("Issue generating the wallet {}, {}", e.getMessage(), e.getStackTrace());
