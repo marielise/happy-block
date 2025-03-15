@@ -3,19 +3,22 @@ package com.happy.block.service;
 import static com.happy.block.common.Utils.convertToHex;
 
 import com.happy.block.domain.AccountBalance;
+import com.happy.block.domain.ContractInfoDao;
 import com.happy.block.domain.EstimatedCost;
 import com.happy.block.entities.HappyWallet;
+import com.happy.block.entities.NftContract;
 import com.happy.block.entities.User;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.security.Principal;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Convert;
 
 @Slf4j
@@ -28,16 +31,36 @@ public class HappyService {
   private final UserService userService;
   private final WalletService walletService;
   private final EncryptionService encryptionService;
+  private final NftService nftService;
 
   @SneakyThrows
-  public void mint(Principal principal) {
-    log.info("Do something");
-    String info = blockchainService.getBlockchainVersion();
-    log.info("blockchain version is {}", info);
+  @Transactional
+  public String mint(String userName, ContractInfoDao contractInfoDao) {
+    log.info("Start minting contract address {} for user {}", contractInfoDao, userName);
+    HappyWallet happyWallet = getHappyWallet(userName);
+
+    try {
+      String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
+      Credentials credentials = Credentials.create(convertToHex(decryptedKey));
+
+      EstimatedCost estimatedCost = blockchainService.happyNFTMintEstimate(credentials, contractInfoDao.getContractAddress());
+
+      TransactionReceipt receipt = blockchainService.happyNFTMint(credentials, estimatedCost.getEstimatedGas(), contractInfoDao.getContractAddress());
+
+      log.info("HappyNFT minted {}", receipt);
+
+      return receipt.getTransactionHash();
+
+    } catch (Exception e) {
+      log.error("deploy contract error", e);
+      throw new RuntimeException(e);
+    }
+
   }
 
   //TODO Refactor to use Auth
-  public String deployContract(String userName) {
+  @Transactional(rollbackFor = Exception.class)
+  public NftContract deployContract(String userName) {
     log.info("Deploy contract by user {}", userName);
 
     HappyWallet happyWallet = getHappyWallet(userName);
@@ -46,9 +69,14 @@ public class HappyService {
       String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
       Credentials credentials = Credentials.create(convertToHex(decryptedKey));
 
-      EstimatedCost estimatedCost = blockchainService.happyNFTEstimate(credentials);
+      EstimatedCost estimatedCost = blockchainService.happyNFTDeployEstimate(credentials);
 
-      return blockchainService.deployContract(credentials, estimatedCost.getEstimatedGas());
+      String address = blockchainService.deployContract(credentials, estimatedCost.getEstimatedGas());
+
+      NftContract contract = nftService.save("HappyNFT", address);
+      log.info("contract deployed {}", contract);
+
+      return contract;
 
     } catch (Exception e) {
       log.error("deploy contract error", e);
@@ -89,15 +117,36 @@ public class HappyService {
 
   }
 
-  public EstimatedCost estimateTransactionFee(String userName) {
-    log.info("Estimate transaction fee by user {}", userName);
+  public EstimatedCost estimateDeployTransactionFee(String userName) {
+    log.info("Estimate deploy transaction fee by user {}", userName);
 
     HappyWallet happyWallet = getHappyWallet(userName);
     try {
       String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
       Credentials credentials = Credentials.create(convertToHex(decryptedKey));
 
-      return blockchainService.happyNFTEstimate(credentials);
+      return blockchainService.happyNFTDeployEstimate(credentials);
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * To evolve to be able to select the contract in db
+   * @param userName user
+   * @param contractInfoDao contract information
+   * @return estimated cost EstimatedCost
+   */
+  public EstimatedCost estimateMintTransactionFee(String userName, ContractInfoDao contractInfoDao) {
+    log.info("Estimate mint transaction fee by user {} for contract {}", userName, contractInfoDao);
+
+    HappyWallet happyWallet = getHappyWallet(userName);
+    try {
+      String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
+      Credentials credentials = Credentials.create(convertToHex(decryptedKey));
+
+      return blockchainService.happyNFTMintEstimate(credentials, contractInfoDao.getContractAddress());
 
     } catch (Exception e) {
       throw new RuntimeException(e);

@@ -22,3 +22,10 @@ happy:
     directory: "./wallet"
   encrypt:
     encryption-key: "wr%$^safl;j_safhsdfcv"
+
+logging:
+  level:
+    root: INFO
+    com.happy.block: DEBUG
+    org.springframework: INFO
+    org.web3j.protocol.http: DEBUG

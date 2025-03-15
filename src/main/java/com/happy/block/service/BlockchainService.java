@@ -5,15 +5,23 @@ import com.happy.block.contract.HappyNFT;
 import com.happy.block.domain.EstimatedCost;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Function;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthEstimateGas;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.gas.DefaultGasProvider;
+import org.web3j.tx.gas.StaticGasProvider;
 
 @Slf4j
 @Service
@@ -42,21 +50,38 @@ public class BlockchainService {
   }
 
   public EthGetBalance getAccountBalance(String address) throws Exception {
-    log.info("getAccountBalance address={}", address);
+    log.info("getAccountBalance address= {} ", address);
     return web3j.ethGetBalance(address, DefaultBlockParameterName.LATEST).send();
   }
 
-  public EstimatedCost happyNFTEstimate(Credentials credentials) throws Exception {
-    return estimateTransactionFee(credentials, HappyNFT.BINARY);
+  public EstimatedCost happyNFTDeployEstimate(Credentials credentials) throws Exception {
+    return estimateDeployTransactionFee(credentials, HappyNFT.BINARY);
   }
 
-  public EstimatedCost estimateTransactionFee(Credentials credentials, String contractByteCode) throws Exception {
-    log.info("address={}", credentials.getAddress());
+  public EstimatedCost estimateDeployTransactionFee(Credentials credentials, String contractByteCode) throws Exception {
 
     EthEstimateGas ethEstimateGas = web3j.ethEstimateGas(Transaction.createContractTransaction(
             credentials.getAddress(), null, BigInteger.ZERO, contractByteCode))
         .send();
 
+    return getEstimatedCost(ethEstimateGas);
+
+  }
+
+  public EstimatedCost estimateMintTransaction(Credentials credentials, String contractAddress, String functionData) throws Exception {
+    EthEstimateGas ethEstimateGas = web3j.ethEstimateGas(
+        Transaction.createFunctionCallTransaction(
+            credentials.getAddress(),
+            null,
+            BigInteger.ZERO,
+            DefaultGasProvider.GAS_LIMIT,
+            contractAddress,
+            functionData)).send();
+
+    return getEstimatedCost(ethEstimateGas);
+  }
+
+  private EstimatedCost getEstimatedCost(EthEstimateGas ethEstimateGas) throws Exception {
     if (ethEstimateGas.getError() != null) {
       log.error(ethEstimateGas.getError().getMessage());
       throw new Exception(ethEstimateGas.getError().getMessage());
@@ -79,7 +104,37 @@ public class BlockchainService {
         .gasPriceWei(gasPrice)
         .totalCostWei(totalCostWei)
         .build();
+  }
+
+  public static String getHappyNFTMintFunctionData(String recipientAddress) {
+    // Define function parameters
+    Function function = new Function(
+        "mintNFT", // Function name must match contract
+        Arrays.asList(new Address(recipientAddress)), // Address parameter
+        Collections.emptyList()
+    );
+
+    // Encode function call
+    return FunctionEncoder.encode(function);
+  }
+
+  public EstimatedCost happyNFTMintEstimate(Credentials credentials,
+      String contractAddress) throws Exception {
+    String functionData = getHappyNFTMintFunctionData(credentials.getAddress());
+
+    return estimateMintTransaction(credentials, contractAddress, functionData);
 
   }
 
+  public TransactionReceipt happyNFTMint(Credentials credentials, BigInteger estimatedGas, String contractAddress)
+      throws Exception {
+    BigInteger gasLimit = estimatedGas.multiply(BigInteger.TWO); //Multiply by 2
+    HappyNFT contract = HappyNFT.load(contractAddress, web3j, credentials, new StaticGasProvider(BigInteger.ZERO, gasLimit));
+
+    TransactionReceipt receipt = contract.mintNFT(credentials.getAddress()).send();
+    log.info("HappyNFT minted {}", receipt);
+
+    return receipt;
+
+  }
 }
