@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface NftContractRepository extends JpaRepository<NftContract, UUID> {
 
   NftContract findByContractType(String contractType);
+
+  NftContract findByContractTypeAndContractName(String contractType, String contractName);
 }

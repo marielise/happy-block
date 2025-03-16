@@ -51,7 +51,7 @@ public class AdminRaffleControllerTest {
   void pickWinner_ShouldReturnWinnerAddress() {
     // Arrange
     PickWinnerRequest request = new PickWinnerRequest();
-    request.setRaffleAddress("0x123");
+    request.setRaffleName("MyRaffle");
     String user = "testUser";
     when(raffleService.pickWinner(request, user)).thenReturn("0xWinner");
 

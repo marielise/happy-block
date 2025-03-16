@@ -22,23 +22,24 @@ import org.web3j.tx.gas.StaticGasProvider;
 
 @Slf4j
 @Service
+@Getter
 public class BlockchainService {
 
-  @Getter
   private final Web3j web3j;
   private final BlockChainConfig config;
 
 
   public BlockchainService(BlockChainConfig config) {
     this.config = config;
-
     web3j = Web3j.build(new HttpService("http://"+ this.config.getNodeHost()+":" +  this.config.getNodePort() ));
   }
 
+  /**
+   * Utility
+   */
   public String getBlockchainVersion() throws Exception {
     return web3j.web3ClientVersion().send().getWeb3ClientVersion();
   }
-
 
   public EthGetBalance getAccountBalance(String address) throws Exception {
     log.info("getAccountBalance address= {} ", address);

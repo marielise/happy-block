@@ -12,6 +12,7 @@ import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Utf8String;
 import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Credentials;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.tx.gas.StaticGasProvider;
 
@@ -83,6 +84,29 @@ public class HappyRaffleNFTSupport {
         raffleName // String raffle name instead of Utf8String
     ).send();
     return contract.getContractAddress();
+  }
+
+  public TransactionReceipt pickWinner(Credentials credentials, String contractAddress, BigInteger estimatedGas, BlockchainService blockchainService) throws Exception {
+    HappyRaffleNFT raffleContract = HappyRaffleNFT.load(contractAddress,
+        blockchainService.getWeb3j(),
+        credentials,
+        new StaticGasProvider(DefaultGasProvider.GAS_PRICE, estimatedGas));
+
+    return raffleContract.pickWinner().send();
+  }
+
+  public String getWinnerAddress(Credentials credentials, String contractAddress, BigInteger estimatedGas, BlockchainService service) throws Exception {
+
+    HappyRaffleNFT raffleContract = HappyRaffleNFT.load(
+        contractAddress,
+        service.getWeb3j(),
+        credentials,
+        new StaticGasProvider(DefaultGasProvider.GAS_PRICE, estimatedGas)
+    );
+
+    String winnerAddress = raffleContract.getWinner().send();
+
+    return winnerAddress;
   }
 
   public EstimatedCost happyRaffleDeployEstimate(Credentials credentials, BlockchainService blockchainService) throws Exception {

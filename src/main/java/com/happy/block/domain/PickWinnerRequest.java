@@ -5,13 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class PickWinnerRequest {
+  @Data
+  @Builder
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public class PickWinnerRequest {
 
-  private String raffleAddress;
-  private String raffleName;
+    private String raffleName;
 
-}
+  }

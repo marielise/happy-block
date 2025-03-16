@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(path={"/api/happy"}, produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
-@Tag()
+@Tag(name = "Controller for POC", description = "used to play with the contracts")
 public class HappyController {
 
     private final HappyService happyService;

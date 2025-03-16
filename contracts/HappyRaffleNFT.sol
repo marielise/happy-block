@@ -9,6 +9,7 @@ contract HappyRaffleNFT is ERC721, Ownable {
     address[] private _participants;
     mapping(uint256 => address) private _ticketOwners;
     string public raffleName;
+    address public winner;
 
     constructor(string memory _raffleName) ERC721("RaffleNFT", "RAFFLE") Ownable(msg.sender) {
         raffleName = _raffleName;
@@ -31,16 +32,21 @@ contract HappyRaffleNFT is ERC721, Ownable {
     }
 
     function getRaffleName() public view returns (string memory) {
-        return raffleName; // ✅ Return the raffle name
+        return raffleName; // Return the raffle name
     }
 
     function pickWinner() public onlyOwner returns (address) {
         require(_participants.length > 0, "No participants in the raffle");
 
         uint256 winnerIndex = uint256(blockhash(block.number - 1)) % _participants.length;
-        address winner = _participants[winnerIndex];
+        winner = _participants[winnerIndex]; // Store winner in state variable
 
         delete _participants;
+        return winner;
+    }
+
+    function getWinner() public view returns (address) {
+        require(winner != address(0), "No winner has been picked yet");
         return winner;
     }
 
