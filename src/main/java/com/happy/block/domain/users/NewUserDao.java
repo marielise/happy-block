@@ -1,4 +1,4 @@
-package com.happy.block.domain;
+package com.happy.block.domain.users;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

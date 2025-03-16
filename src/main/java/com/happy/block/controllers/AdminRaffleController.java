@@ -1,7 +1,7 @@
 package com.happy.block.controllers;
 
-import com.happy.block.domain.CreateRaffleRequest;
-import com.happy.block.domain.PickWinnerRequest;
+import com.happy.block.domain.raffle.CreateRaffleRequest;
+import com.happy.block.domain.raffle.PickWinnerRequest;
 import com.happy.block.service.AdminRaffleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

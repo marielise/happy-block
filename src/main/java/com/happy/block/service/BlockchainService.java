@@ -114,7 +114,7 @@ public class BlockchainService {
 
 
   /**
-   * Generic function to mint NFT
+   * not Generic function to mint NFT => to move
    * @param credentials
    * @param estimatedGas
    * @param contractAddress

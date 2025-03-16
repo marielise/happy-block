@@ -1,4 +1,4 @@
-package com.happy.block.domain;
+package com.happy.block.domain.raffle;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

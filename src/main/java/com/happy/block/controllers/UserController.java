@@ -1,8 +1,8 @@
 package com.happy.block.controllers;
 
 
-import com.happy.block.domain.NewUserDao;
-import com.happy.block.domain.UserRegistrationDao;
+import com.happy.block.domain.users.NewUserDao;
+import com.happy.block.domain.users.UserRegistrationDao;
 import com.happy.block.entities.User;
 import com.happy.block.service.UserService;
 import jakarta.validation.Valid;

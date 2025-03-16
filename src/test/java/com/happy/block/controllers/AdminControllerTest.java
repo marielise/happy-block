@@ -1,6 +1,5 @@
-package com.happy.block.controller;
+package com.happy.block.controllers;
 
-import com.happy.block.controllers.AdminController;
 import com.happy.block.domain.TransferGasDao;
 import com.happy.block.service.AdminService;
 import org.junit.jupiter.api.BeforeEach;

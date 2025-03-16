@@ -1,7 +1,7 @@
 package com.happy.block.service;
 
 import com.happy.block.domain.EstimatedCost;
-import com.happy.block.domain.PickWinnerRequest;
+import com.happy.block.domain.raffle.PickWinnerRequest;
 import com.happy.block.entities.NftContract;
 import com.happy.block.support.HappyRaffleNFTSupport;
 import lombok.AllArgsConstructor;

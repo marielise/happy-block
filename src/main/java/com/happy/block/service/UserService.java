@@ -3,8 +3,8 @@ package com.happy.block.service;
 import static com.happy.block.common.Utils.generateEthereumAddress;
 import static com.happy.block.common.Utils.isValidEthereumAddress;
 
-import com.happy.block.domain.NewUserDao;
-import com.happy.block.domain.UserRegistrationDao;
+import com.happy.block.domain.users.NewUserDao;
+import com.happy.block.domain.users.UserRegistrationDao;
 import com.happy.block.entities.User;
 import com.happy.block.repositories.UserRepository;
 import java.util.Optional;

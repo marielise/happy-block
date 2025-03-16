@@ -9,7 +9,7 @@ contract HappyRaffleNFT is ERC721, Ownable {
     address[] private _participants;
     mapping(uint256 => address) private _ticketOwners;
     string public raffleName;
-    address public winner;
+    address public winner; //don't have time to use events to check winner
 
     constructor(string memory _raffleName) ERC721("RaffleNFT", "RAFFLE") Ownable(msg.sender) {
         raffleName = _raffleName;
