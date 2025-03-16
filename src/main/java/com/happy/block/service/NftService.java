@@ -18,9 +18,9 @@ public class NftService {
     return nftContractRepository.findById(id).orElse(null);
   }
 
-  public NftContract findByContractType(String type) {
+  public NftContract findByContractTypeAndName(String type, String name) {
     log.info("find NftContract by contractType {}", type);
-    return nftContractRepository.findByContractType(type);
+    return nftContractRepository.findByContractTypeAndContractName(type, name);
   }
 
   public NftContract save(String type, String address) {

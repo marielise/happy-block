@@ -5,19 +5,16 @@ import com.happy.block.contract.HappyNFT;
 import com.happy.block.domain.EstimatedCost;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.web3j.abi.FunctionEncoder;
-import org.web3j.abi.datatypes.Address;
-import org.web3j.abi.datatypes.Function;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthEstimateGas;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.DefaultGasProvider;
@@ -27,10 +24,10 @@ import org.web3j.tx.gas.StaticGasProvider;
 @Service
 public class BlockchainService {
 
+  @Getter
   private final Web3j web3j;
   private final BlockChainConfig config;
 
-  //TODO manage proper config instead of hardcoded
 
   public BlockchainService(BlockChainConfig config) {
     this.config = config;
@@ -42,21 +39,12 @@ public class BlockchainService {
     return web3j.web3ClientVersion().send().getWeb3ClientVersion();
   }
 
-  public String deployContract (Credentials credentials, BigInteger estimatedGas) throws Exception {
-    BigInteger gasLimit = estimatedGas.add(estimatedGas.multiply(new BigInteger("20")).divide(new BigInteger("100"))); //20%
-    HappyNFT contract = HappyNFT.deploy(web3j, credentials,  BigInteger.ZERO, gasLimit).send();
-
-    return contract.getContractAddress();
-  }
 
   public EthGetBalance getAccountBalance(String address) throws Exception {
     log.info("getAccountBalance address= {} ", address);
     return web3j.ethGetBalance(address, DefaultBlockParameterName.LATEST).send();
   }
 
-  public EstimatedCost happyNFTDeployEstimate(Credentials credentials) throws Exception {
-    return estimateDeployTransactionFee(credentials, HappyNFT.BINARY);
-  }
 
   public EstimatedCost estimateDeployTransactionFee(Credentials credentials, String contractByteCode) throws Exception {
 
@@ -64,11 +52,28 @@ public class BlockchainService {
             credentials.getAddress(), null, BigInteger.ZERO, contractByteCode))
         .send();
 
-    return getEstimatedCost(ethEstimateGas);
+    return getEstimatedCostMapper(ethEstimateGas);
 
   }
 
-  public EstimatedCost estimateMintTransaction(Credentials credentials, String contractAddress, String functionData) throws Exception {
+  public EstimatedCost estimateBurnTransactionFee(Credentials credentials, String contractAddress, String contractByteCode) throws Exception {
+    return estimateNFTCallTransaction(credentials, contractAddress, contractByteCode);
+  }
+
+  public EstimatedCost estimateMintTransactionFee(Credentials credentials, String contractAddress, String contractByteCode) throws Exception {
+    return estimateNFTCallTransaction(credentials, contractAddress, contractByteCode);
+  }
+
+
+  /**
+   * Generic function to estimate cost
+   * @param credentials
+   * @param contractAddress
+   * @param functionData
+   * @return
+   * @throws Exception
+   */
+  public EstimatedCost estimateNFTCallTransaction(Credentials credentials, String contractAddress, String functionData) throws Exception {
     EthEstimateGas ethEstimateGas = web3j.ethEstimateGas(
         Transaction.createFunctionCallTransaction(
             credentials.getAddress(),
@@ -78,10 +83,10 @@ public class BlockchainService {
             contractAddress,
             functionData)).send();
 
-    return getEstimatedCost(ethEstimateGas);
+    return getEstimatedCostMapper(ethEstimateGas);
   }
 
-  private EstimatedCost getEstimatedCost(EthEstimateGas ethEstimateGas) throws Exception {
+  private EstimatedCost getEstimatedCostMapper(EthEstimateGas ethEstimateGas) throws Exception {
     if (ethEstimateGas.getError() != null) {
       log.error(ethEstimateGas.getError().getMessage());
       throw new Exception(ethEstimateGas.getError().getMessage());
@@ -106,35 +111,59 @@ public class BlockchainService {
         .build();
   }
 
-  public static String getHappyNFTMintFunctionData(String recipientAddress) {
-    // Define function parameters
-    Function function = new Function(
-        "mintNFT", // Function name must match contract
-        Arrays.asList(new Address(recipientAddress)), // Address parameter
-        Collections.emptyList()
-    );
 
-    // Encode function call
-    return FunctionEncoder.encode(function);
-  }
-
-  public EstimatedCost happyNFTMintEstimate(Credentials credentials,
-      String contractAddress) throws Exception {
-    String functionData = getHappyNFTMintFunctionData(credentials.getAddress());
-
-    return estimateMintTransaction(credentials, contractAddress, functionData);
-
-  }
-
-  public TransactionReceipt happyNFTMint(Credentials credentials, BigInteger estimatedGas, String contractAddress)
+  /**
+   * Generic function to mint NFT
+   * @param credentials
+   * @param estimatedGas
+   * @param contractAddress
+   * @return
+   * @throws Exception
+   */
+  public TransactionReceipt contractMint(Credentials credentials, BigInteger estimatedGas, String contractAddress)
       throws Exception {
     BigInteger gasLimit = estimatedGas.multiply(BigInteger.TWO); //Multiply by 2
     HappyNFT contract = HappyNFT.load(contractAddress, web3j, credentials, new StaticGasProvider(BigInteger.ZERO, gasLimit));
 
     TransactionReceipt receipt = contract.mintNFT(credentials.getAddress()).send();
-    log.info("HappyNFT minted {}", receipt);
+    log.info("NFT minted {}", receipt);
 
     return receipt;
+
+  }
+
+  public String transferGas(Credentials fromCredentials, Credentials toCredentials, BigInteger amount) {
+
+    try {
+      log.info("Transferring {} gas from {} to {}", amount, fromCredentials.getAddress(), toCredentials.getAddress());
+
+      // Create transaction
+      Transaction transaction = Transaction.createEtherTransaction(
+          fromCredentials.getAddress(),
+          null,
+          web3j.ethGasPrice().send().getGasPrice(),
+          DefaultGasProvider.GAS_LIMIT, // gas limit
+          toCredentials.getAddress(),
+          amount
+      );
+
+      // Sign and send transaction
+      EthSendTransaction response = web3j.ethSendTransaction(transaction).send();
+
+
+      if (response.hasError()) {
+        log.error("Gas transfer error: {}", response.getError().getMessage());
+        throw new RuntimeException("Gas transfer failed: " + response.getError().getMessage());
+      }
+
+      log.info("Transaction Hash: {}", response.getTransactionHash());
+
+      return response.getTransactionHash();
+
+    } catch (Exception e) {
+      log.error("Failed to transfer gas: ", e);
+      throw new RuntimeException("Error transferring gas", e);
+    }
 
   }
 }

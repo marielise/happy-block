@@ -8,6 +8,7 @@ import com.happy.block.domain.EstimatedCost;
 import com.happy.block.entities.HappyWallet;
 import com.happy.block.entities.NftContract;
 import com.happy.block.entities.User;
+import com.happy.block.support.HappyNFTSupport;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
@@ -21,6 +22,10 @@ import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Convert;
 
+/**
+ * This class was used mainly as a POC
+ */
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,6 +37,7 @@ public class HappyService {
   private final WalletService walletService;
   private final EncryptionService encryptionService;
   private final NftService nftService;
+  private final HappyNFTSupport happyNFTSupport;
 
   @SneakyThrows
   @Transactional
@@ -43,9 +49,9 @@ public class HappyService {
       String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
       Credentials credentials = Credentials.create(convertToHex(decryptedKey));
 
-      EstimatedCost estimatedCost = blockchainService.happyNFTMintEstimate(credentials, contractInfoDao.getContractAddress());
+      EstimatedCost estimatedCost = happyNFTSupport.happyNFTMintEstimate(credentials, contractInfoDao.getContractAddress(), blockchainService);
 
-      TransactionReceipt receipt = blockchainService.happyNFTMint(credentials, estimatedCost.getEstimatedGas(), contractInfoDao.getContractAddress());
+      TransactionReceipt receipt = blockchainService.contractMint(credentials, estimatedCost.getEstimatedGas(), contractInfoDao.getContractAddress());
 
       log.info("HappyNFT minted {}", receipt);
 
@@ -58,20 +64,16 @@ public class HappyService {
 
   }
 
-  //TODO Refactor to use Auth
+  //TODO use OAuth /
   @Transactional(rollbackFor = Exception.class)
   public NftContract deployContract(String userName) {
     log.info("Deploy contract by user {}", userName);
 
-    HappyWallet happyWallet = getHappyWallet(userName);
-
     try {
-      String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
-      Credentials credentials = Credentials.create(convertToHex(decryptedKey));
+    Credentials credentials = walletService.getCredentialsForUser(userName);
 
-      EstimatedCost estimatedCost = blockchainService.happyNFTDeployEstimate(credentials);
-
-      String address = blockchainService.deployContract(credentials, estimatedCost.getEstimatedGas());
+      EstimatedCost estimatedCost = happyNFTSupport.happyNFTDeployEstimate(credentials, blockchainService);
+      String address = happyNFTSupport.deployContract(credentials, estimatedCost.getEstimatedGas(), blockchainService);
 
       NftContract contract = nftService.save("HappyNFT", address);
       log.info("contract deployed {}", contract);
@@ -125,7 +127,7 @@ public class HappyService {
       String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
       Credentials credentials = Credentials.create(convertToHex(decryptedKey));
 
-      return blockchainService.happyNFTDeployEstimate(credentials);
+      return happyNFTSupport.happyNFTDeployEstimate(credentials, blockchainService);
 
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -146,7 +148,7 @@ public class HappyService {
       String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
       Credentials credentials = Credentials.create(convertToHex(decryptedKey));
 
-      return blockchainService.happyNFTMintEstimate(credentials, contractInfoDao.getContractAddress());
+      return happyNFTSupport.happyNFTMintEstimate(credentials, contractInfoDao.getContractAddress(), blockchainService);
 
     } catch (Exception e) {
       throw new RuntimeException(e);

@@ -5,6 +5,7 @@ import com.happy.block.domain.ContractInfoDao;
 import com.happy.block.domain.EstimatedCost;
 import com.happy.block.entities.NftContract;
 import com.happy.block.service.HappyService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(path={"/api/happy"}, produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Tag()
 public class HappyController {
 
     private final HappyService happyService;

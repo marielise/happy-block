@@ -1,5 +1,7 @@
 package com.happy.block.service;
 
+import static com.happy.block.common.Utils.convertToHex;
+
 import com.happy.block.config.WalletServiceConfig;
 import com.happy.block.entities.HappyWallet;
 import com.happy.block.entities.User;
@@ -21,6 +23,7 @@ public class WalletService {
   private final WalletServiceConfig walletServiceConfig;
   private final HappyWalletRepository happyWalletRepository;
   private final EncryptionService encryptionService;
+  private final UserService userService;
 
   public HappyWallet createWalletForUser(User user){
     Random random = new Random();
@@ -63,6 +66,25 @@ public class WalletService {
 
   public Optional<HappyWallet> getWalletForUser(User user){
     return happyWalletRepository.findByUser(user);
+  }
+
+  public Credentials getCredentialsForUser(String userName){
+    HappyWallet happyWallet = getHappyWallet(userName);
+    try {
+      String decryptedKey = encryptionService.decrypt(happyWallet.getPrivateEncryptedKey());
+      return Credentials.create(convertToHex(decryptedKey));
+    } catch (Exception e) {
+      log.error("Issue getting credentials {}, {}", e.getMessage(), e.getStackTrace());
+      //TODO add proper exception management
+      throw new RuntimeException(e);
+    }
+  }
+
+  private HappyWallet getHappyWallet(String userName) {
+    User user = userService.getUser(userName);
+    Optional<HappyWallet> maybeHappyWallet = getWalletForUser(user);
+
+    return maybeHappyWallet.orElseGet(() -> createWalletForUser(user));
   }
 
 }

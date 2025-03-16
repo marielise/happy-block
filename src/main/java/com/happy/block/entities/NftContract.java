@@ -30,5 +30,7 @@ public class NftContract {
   @Column(nullable = false)
   private String contractAddress;
 
+  @Column(nullable = false)
+  private String contractName;
 
 }
