@@ -38,7 +38,9 @@ contract HappyRaffleNFT is ERC721, Ownable {
     function pickWinner() public onlyOwner returns (address) {
         require(_participants.length > 0, "No participants in the raffle");
 
-        uint256 winnerIndex = uint256(blockhash(block.number - 1)) % _participants.length;
+        uint256 randomSeed = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender))); //used chatGPT
+        uint256 winnerIndex = randomSeed % _participants.length;
+
         winner = _participants[winnerIndex]; // Store winner in state variable
 
         delete _participants;
@@ -52,6 +54,15 @@ contract HappyRaffleNFT is ERC721, Ownable {
 
     function burnTicket(uint256 tokenId) public {
         require(ownerOf(tokenId) == msg.sender, "Not the ticket owner");
+
+        // Find the participant and remove them from the list
+        for (uint256 i = 0; i < _participants.length; i++) {
+            if (_participants[i] == msg.sender) {
+                _participants[i] = _participants[_participants.length - 1]; //get last
+                _participants.pop(); //remove last
+                break;
+            }
+        }
         _burn(tokenId);
     }
 }

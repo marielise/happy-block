@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.RawTransaction;
+import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.Transaction;
@@ -19,6 +21,7 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.tx.gas.StaticGasProvider;
+import org.web3j.utils.Numeric;
 
 @Slf4j
 @Service
@@ -138,18 +141,23 @@ public class BlockchainService {
     try {
       log.info("Transferring {} gas from {} to {}", amount, fromCredentials.getAddress(), toCredentials.getAddress());
 
+      BigInteger nonce = web3j.ethGetTransactionCount(fromCredentials.getAddress(), DefaultBlockParameterName.LATEST)
+          .send().getTransactionCount();
+
       // Create transaction
-      Transaction transaction = Transaction.createEtherTransaction(
-          fromCredentials.getAddress(),
-          null,
+      RawTransaction rawTransaction = RawTransaction.createEtherTransaction(
+          nonce,
           web3j.ethGasPrice().send().getGasPrice(),
-          DefaultGasProvider.GAS_LIMIT, // gas limit
+          DefaultGasProvider.GAS_LIMIT,
           toCredentials.getAddress(),
           amount
       );
 
+      byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, fromCredentials);
+      String hexValue = Numeric.toHexString(signedMessage);
+
       // Sign and send transaction
-      EthSendTransaction response = web3j.ethSendTransaction(transaction).send();
+      EthSendTransaction response = web3j.ethSendRawTransaction(hexValue).send();
 
 
       if (response.hasError()) {
