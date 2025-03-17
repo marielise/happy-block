@@ -23,10 +23,11 @@ public class NftService {
     return nftContractRepository.findByContractTypeAndContractName(type, name);
   }
 
-  public NftContract save(String type, String address) {
+  public NftContract save(String type, String address, String contractName) {
     NftContract nftContract = NftContract.builder()
         .contractAddress(address)
         .contractType(type)
+        .contractName(contractName)
         .build();
     return nftContractRepository.save(nftContract);
   }

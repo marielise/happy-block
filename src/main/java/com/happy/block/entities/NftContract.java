@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +18,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "nft_contracts", schema = "happy_db")
+@Table(name = "nft_contracts", schema = "happy_db",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"contract_type", "contract_name"})
+    })
 public class NftContract {
 
   @Id
@@ -27,7 +31,7 @@ public class NftContract {
   @Column(nullable = false)
   private String contractType;
 
-  @Column(nullable = false)
+  @Column(nullable = false, unique = true)
   private String contractAddress;
 
   @Column(nullable = false)

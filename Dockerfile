@@ -1,6 +1,10 @@
-FROM openjdk:17
-VOLUME /tmp
-ADD target/your-app.jar app.jar
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+COPY build/libs/*.jar app.jar
 RUN mkdir /wallets
+# Expose port
 EXPOSE 8080
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

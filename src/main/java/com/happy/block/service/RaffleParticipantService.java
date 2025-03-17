@@ -8,8 +8,10 @@ import com.happy.block.entities.NftContract;
 import com.happy.block.support.HappyRaffleNFTSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
@@ -43,13 +45,13 @@ public class RaffleParticipantService {
           nftContract.getContractAddress(),
           blockchainService);
 
-      BigInteger totalCostWei = estimatedCost.getTotalCostWei();
+      BigInteger totalCostWei = estimatedCost.getEstimatedGas();
 
       // Check account balance
       BigInteger balance = blockchainService.getAccountBalance(credentials.getAddress())
           .getBalance();
       if (balance.compareTo(totalCostWei) < 0) {
-        throw new RuntimeException("Insufficient balance to get raffle ticket");
+        throw new RuntimeException( "Insufficient balance to get raffle ticket");
       }
 
       // Mint ticket
@@ -65,9 +67,10 @@ public class RaffleParticipantService {
       log.info("Minted raffle ticket ID: {}", tokenId);
 
       return tokenId;
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       log.error("Failed to mint raffle ticket", e);
-      throw new RuntimeException("Minting raffle ticket failed", e);
+      throw new RuntimeException("Minting raffle ticket failed: " + e.getMessage() );
     }
   }
 
@@ -78,7 +81,8 @@ public class RaffleParticipantService {
     // Get contract address from raffle name
     NftContract nftContract = nftService.findByContractTypeAndName(RAFFLE, request.getRaffleName());
     if (nftContract == null) {
-      throw new RuntimeException("No raffle found with name: " + request.getRaffleName());
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "No raffle found with name: " + request.getRaffleName());
     }
 
     Credentials fromCredentials = walletService.getCredentialsForUser(fromUser);
@@ -94,13 +98,14 @@ public class RaffleParticipantService {
           blockchainService
       );
 
-      BigInteger totalCostWei = estimatedCost.getTotalCostWei();
+      BigInteger totalCostWei = estimatedCost.getEstimatedGas();
 
       // Check sender's balance
       BigInteger balance = blockchainService.getAccountBalance(fromCredentials.getAddress())
           .getBalance();
       if (balance.compareTo(totalCostWei) < 0) {
-        throw new RuntimeException("Insufficient balance to get raffle ticket");
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "Insufficient balance to get raffle ticket");
       }
 
       // Execute transfer
@@ -116,7 +121,8 @@ public class RaffleParticipantService {
       return receipt.getTransactionHash();
     } catch (Exception e) {
       log.error("Failed to transfer raffle ticket", e);
-      throw new RuntimeException("Transferring raffle ticket failed", e);
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Transferring raffle ticket failed: " + e.getMessage());
     }
   }
 
@@ -159,7 +165,7 @@ public class RaffleParticipantService {
       return receipt.getTransactionHash();
     } catch (Exception e) {
       log.error("Failed to burn raffle ticket", e);
-      throw new RuntimeException("Burning raffle ticket failed", e);
+      throw new RuntimeException("Burning raffle ticket failed: " + e.getMessage());
     }
   }
 }

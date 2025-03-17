@@ -10,6 +10,7 @@ import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Utf8String;
 import org.web3j.abi.datatypes.generated.Uint256;
@@ -45,7 +46,7 @@ public class HappyRaffleNFTSupport {
       String toAddress,
       BlockchainService service) throws Exception {
 
-    String functionData = getHappyRaffleTransferFunctionData(tokenId, toAddress);
+    String functionData = getHappyRaffleTransferFunctionData(tokenId,credentials.getAddress(), toAddress);
     return service.estimateNFTCallTransaction(credentials, contractAddress, functionData);
   }
 
@@ -75,10 +76,14 @@ public class HappyRaffleNFTSupport {
     return FunctionEncoder.encode(function);
   }
 
-  public static String getHappyRaffleTransferFunctionData(BigInteger tokenId, String toAddress) {
+  public static String getHappyRaffleTransferFunctionData(BigInteger tokenId, String fromAddress, String toAddress) {
     Function function = new Function(
         "transferFrom",
-        Arrays.asList(new Uint256(tokenId), new Utf8String(toAddress)),
+        Arrays.asList(
+            new Address(fromAddress), // Sender (current owner)
+            new Address(toAddress), // Recipient
+            new Uint256(tokenId) // NFT Token ID
+        ),
         Collections.emptyList()
     );
     return FunctionEncoder.encode(function);
@@ -103,8 +108,8 @@ public class HappyRaffleNFTSupport {
     HappyRaffleNFT contract = HappyRaffleNFT.deploy(
         service.getWeb3j(),
         credentials,
-        new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT),
-        raffleName // String raffle name instead of Utf8String
+        new StaticGasProvider(DefaultGasProvider.GAS_PRICE, gasLimit),
+        raffleName
     ).send();
     return contract.getContractAddress();
   }
@@ -156,7 +161,7 @@ public class HappyRaffleNFTSupport {
     );
 
     // Execute the transfer on the blockchain
-    TransactionReceipt receipt = contract.safeTransferFrom(
+    TransactionReceipt receipt = contract.transferFrom(
         credentials.getAddress(), // Sender
         toAddress,                // Recipient
         tokenId                    // Token ID
@@ -194,18 +199,27 @@ public class HappyRaffleNFTSupport {
       String contractAddress, BlockchainService blockchainService) throws Exception {
 
     BigInteger gasLimit = estimatedGas.multiply(BigInteger.TWO); //Multiply by 2
-    HappyNFT contract = HappyNFT.load(contractAddress, blockchainService.getWeb3j(), credentials,
+    HappyRaffleNFT contract = HappyRaffleNFT.load(contractAddress,
+        blockchainService.getWeb3j(),
+        credentials,
         new StaticGasProvider(BigInteger.ZERO, gasLimit));
 
-    TransactionReceipt receipt = contract.mintNFT(credentials.getAddress()).send();
+    TransactionReceipt receipt = contract.mintRaffleTicket().send();
 
     return receipt;
 
   }
 
   public EstimatedCost happyRaffleDeployEstimate(Credentials credentials,
-      BlockchainService blockchainService) throws Exception {
-    return blockchainService.estimateDeployTransactionFee(credentials, HappyRaffleNFT.BINARY);
+      BlockchainService blockchainService, String raffleName) throws Exception {
+
+    String encodedConstructor = FunctionEncoder.encodeConstructor(
+        Arrays.asList(new Utf8String(raffleName))
+    );
+
+    String finalBytecode = HappyRaffleNFT.BINARY + encodedConstructor;
+
+    return blockchainService.estimateDeployTransactionFee(credentials, finalBytecode);
   }
 
   public BigInteger extractTokenIdFromReceipt(TransactionReceipt receipt) {

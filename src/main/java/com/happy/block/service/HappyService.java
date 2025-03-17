@@ -75,7 +75,7 @@ public class HappyService {
       EstimatedCost estimatedCost = happyNFTSupport.happyNFTDeployEstimate(credentials, blockchainService);
       String address = happyNFTSupport.deployContract(credentials, estimatedCost.getEstimatedGas(), blockchainService);
 
-      NftContract contract = nftService.save("HappyNFT", address);
+      NftContract contract = nftService.save("HappyNFT", address, "no_name");
       log.info("contract deployed {}", contract);
 
       return contract;

@@ -87,7 +87,7 @@ public class BlockchainService {
     return getEstimatedCostMapper(ethEstimateGas);
   }
 
-  private EstimatedCost getEstimatedCostMapper(EthEstimateGas ethEstimateGas) throws Exception {
+  private EstimatedCost   getEstimatedCostMapper(EthEstimateGas ethEstimateGas) throws Exception {
     if (ethEstimateGas.getError() != null) {
       log.error(ethEstimateGas.getError().getMessage());
       throw new Exception(ethEstimateGas.getError().getMessage());

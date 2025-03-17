@@ -30,7 +30,8 @@ public class AdminRaffleService {
     String contractAddress;
 
     try {
-      EstimatedCost estimatedCost = happyRaffleNFTSupport.happyRaffleDeployEstimate(credentials, blockchainService);
+      EstimatedCost estimatedCost = happyRaffleNFTSupport.happyRaffleDeployEstimate(credentials, blockchainService, raffleName);
+
       contractAddress = happyRaffleNFTSupport.deployRaffleContract(credentials,
           estimatedCost.getEstimatedGas(),
           blockchainService,
@@ -40,8 +41,8 @@ public class AdminRaffleService {
       log.error("Failed to deploy raffle contract for user {}", userName, e);
       throw new RuntimeException("Raffle deployment failed", e);
     }
-
-    NftContract nftContract = nftService.save(RAFFLE, contractAddress);
+    log.info("Contract {} deploy at address {}", raffleName, contractAddress);
+    NftContract nftContract = nftService.save(RAFFLE, contractAddress, raffleName);
     log.info("Raffle contract deployed at {}", contractAddress);
 
     return contractAddress;
