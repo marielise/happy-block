@@ -1,9 +1,17 @@
 # happy-block
 
+This is a java - spring boot blockchain project on Ethereum using web3j library.
+The main API are on the principle of Raffle tickets using ERC-721 contract and token principle. The contract is called HappyRaffleNFT.
+
+An Admin can create a raffle and pick a winner.
+A participant can get a ticket (mint token), transfer the ticket or destroy it
+
+There is a possibility to add new users to the system, and creating their wallet or by registering existing users.
+
 ## db installation: 
 
 * Install postgresql
-Cf: brew
+Cf: brew for Mac people (Sorry did not had the time to do a proper installation guide for other OS)
 
 ### Initialize the db:
 ```
@@ -74,3 +82,33 @@ besu --data-path=data/dev \
      --miner-coinbase=0xdff18769b14973556fdb7e6f31c9d9e9f7aa8a1e
 
 ```
+
+# Project evolution
+
+Correct the docker compose and interaction with besu nodes (ran out of time). 
+
+## 1 - Add OAuth or SAML ... OpenId (with google , it's free)
+Going in https://console.cloud.google.com/welcome and configuring a new client to have a key and a client-secret
+
+## 2 - Using a vault to store the keys including the encryption key
+It can be loaded at runtime through env variables 
+HAPPY_ENCRYPT_ENCRYPTIONKEY 
+
+## 3 - Error and validation management
+Add proper exceptions and API validation
+Check on unique for db insertion. 
+
+## 4 - Add a prize with the raffle
+
+## 5 - Clean some of the POC first tries
+
+## 6 - Clean some of the contract to make it more efficient and less expensive
+Removing the _winner variables and using events to get the winner.
+
+## 7 - Using proper async management through the API
+
+
+
+
+
+
