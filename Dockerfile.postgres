@@ -1,0 +1,8 @@
+FROM postgres:latest
+
+ENV POSTGRES_USER=happy_s
+ENV POSTGRES_PASSWORD=h@pp1_d8
+ENV POSTGRES_DB=happy_db
+
+# Copy the initialization script
+COPY init.sql /docker-entrypoint-initdb.d/
